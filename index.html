@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>GRIMOIRE RPG</title>
+  <style>
+    :root{
+      --bg: #0b0d10;
+      --text: #e9edf2;
+      --gold: #c5a365;
+      --bar-bg: #1a1f29;
+      --bar-fill: #d7e3ff;
+      --glass: rgba(255, 255, 255, 0.05);
+    }
+    body {
+      margin: 0;
+      font-family: "Hiragino Mincho ProN", serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-top: 60px; /* ステータスバーの分空ける */
+      padding-bottom: 80px;
+    }
+
+    /* === RPGステータスバー (HUD) === */
+    .hud-bar {
+      position: fixed;
+      top: 0; left: 0; width: 100%;
+      height: 56px;
+      background: rgba(11, 13, 16, 0.95);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .level-circle {
+      width: 40px; height: 40px;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #000;
+      font-size: 8px; color: var(--gold);
+      margin-right: 12px;
+    }
+    .level-num { font-size: 18px; font-weight: bold; line-height: 1; }
+    .exp-container { flex: 1; }
+    .exp-label { font-size: 10px; color: #888; display: flex; justify-content: space-between; margin-bottom: 2px; }
+    .exp-bar-bg {
+      height: 6px; background: var(--bar-bg); border-radius: 3px; overflow: hidden;
+    }
+    .exp-bar-fill {
+      height: 100%; background: linear-gradient(90deg, #4facfe, #00f2fe);
+      width: 0%; transition: width 0.5s ease-out;
+    }
+
+    /* コンテンツエリア */
+    main { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
+    h1 { font-size: 20px; text-align: center; margin-bottom: 40px; color: var(--gold); letter-spacing: 0.2em; }
+    
+    .card {
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    /* 封印されたコンテンツ */
+    .locked-content {
+      position: relative;
+      opacity: 0.5;
+      filter: grayscale(100%);
+      pointer-events: none;
+    }
+    .lock-overlay {
+      position: absolute; top:0; left:0; width:100%; height:100%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.6);
+      border-radius: 12px;
+      color: #ff6b6b; font-weight: bold; letter-spacing: 0.1em;
+      z-index: 10;
+    }
+
+    /* 九字切りグリッド */
+    .kuji-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 200px; margin: 20px auto; }
+    .kuji-cell { aspect-ratio: 1; border: 1px solid #444; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+    .kuji-cell.active { background: var(--gold); color: #000; box-shadow: 0 0 10px var(--gold); }
+
+    /* レベルアップ演出 */
+    #levelup-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.9);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.5s;
+    }
+    #levelup-overlay.show { opacity: 1; pointer-events: auto; }
+    .levelup-text { font-size: 40px; color: var(--gold); text-shadow: 0 0 20px var(--gold); margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+  <div class="hud-bar">
+    <div class="level-circle">
+      <span>Lv.</span>
+      <span class="level-num" id="currentLevel">1</span>
+    </div>
+    <div class="exp-container">
+      <div class="exp-label">
+        <span>EXP</span>
+        <span id="expText">0 / 100</span>
+      </div>
+      <div class="exp-bar-bg">
+        <div class="exp-bar-fill" id="expBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <h1>GRIMOIRE</h1>
+
+    <div class="card">
+      <h3>早九字（ハヤクジ）</h3>
+      <p style="font-size:12px; color:#888;">精神統一の儀式。成功で +50 EXP。</p>
+      <div class="kuji-grid" id="kujiGrid"></div>
+      <div id="kujiLabel" style="text-align:center; font-size:12px; height:20px; color:var(--gold);"></div>
+    </div>
+
+    <div class="card locked-content" id="secretContent1">
+      <div class="lock-overlay">🔒 封印 (Lv.3で解除)</div>
+      <h3>【秘伝】ミトコンドリア活性術</h3>
+      <p>細胞レベルでエネルギーを生成する栄養学の基礎。</p>
+      <div style="margin-top:10px; padding:10px; background:#222; font-size:12px;">
+        （ここはまだ読めない文章です...）
+      </div>
+    </div>
+
+    <div class="card locked-content" id="secretContent2">
+      <div class="lock-overlay">🔒 封印 (Lv.5で解除)</div>
+      <h3>【奥義】骨格連動と重力操作</h3>
+      <p>筋力を使わずに相手を崩す、カイロプラクティックの極意。</p>
+    </div>
+
+    <div style="text-align:center; margin-top:40px;">
+      <a href="https://ameblo.jp/orenoadores0224yj/" style="color:#666; font-size:12px; text-decoration:none;">夜21時の文脈編集室へ ＞</a>
+    </div>
+
+  </main>
+
+  <div id="levelup-overlay" onclick="this.classList.remove('show')">
+    <div class="levelup-text">LEVEL UP!</div>
+    <div style="color:#fff;">タップして再開</div>
+  </div>
+
+  <script>
+    // === RPGシステムの中枢 ===
+    let level = parseInt(localStorage.getItem('grimoire_level')) || 1;
+    let exp = parseInt(localStorage.getItem('grimoire_exp')) || 0;
+    let maxExp = level * 100;
+
+    // 初期表示更新
+    updateHud();
+    checkUnlocks();
+
+    // ログインボーナス (1日1回)
+    const lastLogin = localStorage.getItem('last_login_date');
+    const today = new Date().toDateString();
+    if (lastLogin !== today) {
+      alert("【ログインボーナス】\n本日のマナを獲得しました。\nEXP +30");
+      addExp(30);
+      localStorage.setItem('last_login_date', today);
+    }
+
+    // 経験値を加算する関数
+    function addExp(amount) {
+      exp += amount;
+      if (exp >= maxExp) {
+        levelUp();
+      }
+      updateHud();
+      saveData();
+    }
+
+    function levelUp() {
+      exp -= maxExp;
+      level++;
+      maxExp = level * 100;
+      
+      // レベルアップ演出
+      const overlay = document.getElementById('levelup-overlay');
+      overlay.classList.add('show');
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+      
+      checkUnlocks();
+    }
+
+    function updateHud() {
+      document.getElementById('currentLevel').innerText = level;
+      document.getElementById('expText').innerText = `${exp} / ${maxExp}`;
+      const percentage = (exp / maxExp) * 100;
+      document.getElementById('expBar').style.width = `${percentage}%`;
+    }
+
+    function saveData() {
+      localStorage.setItem('grimoire_level', level);
+      localStorage.setItem('grimoire_exp', exp);
+    }
+
+    // ロック解除判定
+    function checkUnlocks() {
+      if (level >= 3) unlock('secretContent1');
+      if (level >= 5) unlock('secretContent2');
+    }
+
+    function unlock(id) {
+      const el = document.getElementById(id);
+      if (el && el.classList.contains('locked-content')) {
+        el.classList.remove('locked-content');
+        el.querySelector('.lock-overlay').remove();
+        // ここでファンファーレ等を鳴らしても良い
+      }
+    }
+
+    // === 九字切りロジック ===
+    const kujiChars = ["臨", "兵", "闘", "者", "皆", "陣", "烈", "在", "前"];
+    const kujiGrid = document.getElementById('kujiGrid');
+    let kujiStep = 0;
+
+    kujiChars.forEach((char, idx) => {
+      const cell = document.createElement('div');
+      cell.className = 'kuji-cell';
+      cell.innerText = char;
+      cell.onclick = () => {
+        if (idx === kujiStep) {
+          cell.classList.add('active');
+          if (navigator.vibrate) navigator.vibrate(20);
+          kujiStep++;
+          if (kujiStep === 9) {
+            document.getElementById('kujiLabel').innerText = "儀式完了: EXP獲得 +50";
+            addExp(50);
+            if (navigator.vibrate) navigator.vibrate([50,50,50]);
+            setTimeout(() => {
+              document.querySelectorAll('.kuji-cell').forEach(c => c.classList.remove('active'));
+              document.getElementById('kujiLabel').innerText = "";
+              kujiStep = 0;
+            }, 2000);
+          }
+        } else {
+          kujiStep = 0;
+          document.querySelectorAll('.kuji-cell').forEach(c => c.classList.remove('active'));
+          if (navigator.vibrate) navigator.vibrate(200);
+        }
+      };
+      kujiGrid.appendChild(cell);
+    });
+  </script>
+</body>
+</html>
