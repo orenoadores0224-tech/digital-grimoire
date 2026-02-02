@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>GRIMOIRE: BIOS</title>
+  <style>
+    :root{
+      --bg: #050505;
+      --panel: #111;
+      --text: #a0a0a0;
+      --accent: #00f2fe; /* BIOS Blue */
+      --wood: #4caf50; /* 肝 */
+      --fire: #f44336; /* 心 */
+      --earth: #ffeb3b; /* 脾 */
+      --metal: #e0e0e0; /* 肺 */
+      --water: #2196f3; /* 腎 */
+      --glass: rgba(0, 242, 254, 0.05);
+    }
+    body {
+      margin: 0;
+      font-family: "Courier New", monospace; /* 技術・メンテ感 */
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px 16px;
+      padding-bottom: 80px;
+    }
+
+    h1 {
+      font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--accent);
+      padding-bottom: 10px; margin-bottom: 30px; letter-spacing: 0.1em;
+      text-shadow: 0 0 8px var(--accent);
+    }
+    
+    .nav-btn {
+      position: absolute; top: 20px; right: 20px;
+      font-size: 12px; color: var(--text); text-decoration: none; border: 1px solid #333; padding: 4px 8px;
+    }
+
+    /* === 診断セクション === */
+    .diagnosis-box {
+      background: var(--panel); border: 1px solid #333; padding: 16px; margin-bottom: 24px; border-radius: 4px;
+    }
+    .check-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .check-btn {
+      border: 1px solid #444; color: #666; padding: 6px 12px; font-size: 11px; cursor: pointer; transition: 0.2s;
+    }
+    .check-btn.active { border-color: var(--accent); color: var(--accent); background: var(--glass); box-shadow: 0 0 8px var(--glass); }
+
+    /* === レーダーチャート（CSSで作る簡易版） === */
+    .chart-container {
+      position: relative; width: 200px; height: 200px; margin: 20px auto;
+      background: radial-gradient(circle, #222 1px, transparent 1px); background-size: 20px 20px;
+      border-radius: 50%; border: 1px solid #333;
+    }
+    .axis-label { position: absolute; font-size: 10px; color: #fff; font-weight: bold; }
+    /* 五行の位置 */
+    .lbl-wood { top: 10%; right: 10%; color: var(--wood); } /* 木 */
+    .lbl-fire { bottom: 10%; right: 10%; color: var(--fire); } /* 火 */
+    .lbl-earth { bottom: -15px; left: 45%; color: var(--earth); } /* 土 */
+    .lbl-metal { bottom: 10%; left: 10%; color: var(--metal); } /* 金 */
+    .lbl-water { top: 10%; left: 10%; color: var(--water); } /* 水 */
+
+    .bar-container { margin-top: 10px; font-size: 10px; }
+    .status-bar { height: 6px; background: #222; margin-bottom: 4px; position: relative; width: 100%; }
+    .status-fill { height: 100%; width: 0%; transition: width 0.5s; }
+
+    /* === 処方箋エリア === */
+    #prescription {
+      border-top: 1px dashed #444; margin-top: 20px; padding-top: 15px; display: none;
+    }
+    .patch-title { color: #fff; font-size: 14px; margin-bottom: 8px; }
+    .patch-content { font-size: 12px; line-height: 1.6; color: #ccc; }
+
+    /* === 軸チューニング（呼吸） === */
+    .tuning-circle {
+      width: 60px; height: 60px; border: 2px solid #333; border-radius: 50%; margin: 40px auto;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; transition: 0.3s;
+    }
+    .tuning-core {
+      width: 10px; height: 10px; background: var(--accent); border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent);
+    }
+    
+    /* アニメーション：山口式呼吸 */
+    @keyframes breathe {
+      0% { transform: scale(1); border-color: #333; } /* 虚無 */
+      40% { transform: scale(1.8); border-color: var(--accent); } /* 吸気（トルク） */
+      50% { transform: scale(1.8); border-color: #fff; } /* 充填 */
+      100% { transform: scale(1); border-color: #333; } /* 呼気（リリース） */
+    }
+    .tuning-active .tuning-circle { animation: breathe 6s infinite ease-in-out; }
+    .breath-text { text-align: center; font-size: 10px; height: 12px; color: var(--accent); opacity: 0; }
+    .tuning-active .breath-text { opacity: 1; transition: opacity 1s; }
+
+  </style>
+</head>
+<body>
+
+  <a href="./index.html" class="nav-btn">◀ RETURN RPG</a>
+
+  <h1>SYSTEM BIOS v1.0</h1>
+
+  <div class="diagnosis-box">
+    <div style="font-size:12px; margin-bottom:10px;"> ERROR LOGS (現在の不調を選択):</div>
+    <div class="check-group" id="symptomList">
+      </div>
+    
+    <div style="text-align:center;">
+      <button onclick="runDiagnosis()" style="background:#222; color:var(--accent); border:1px solid var(--accent); padding:8px 20px; cursor:pointer;">
+        RUN DIAGNOSIS (解析実行)
+      </button>
+    </div>
+  </div>
+
+  <div id="resultArea" style="opacity:0.3; pointer-events:none; transition:0.5s;">
+    
+    <div class="chart-container">
+      <div style="position:absolute; top:45%; left:30%; font-size:10px; color:#555;">ELEMENTAL<br>BALANCE</div>
+      <div class="axis-label lbl-wood">木<br>(肝)</div>
+      <div class="axis-label lbl-fire">火<br>(心)</div>
+      <div class="axis-label lbl-earth">土<br>(脾)</div>
+      <div class="axis-label lbl-metal">金<br>(肺)</div>
+      <div class="axis-label lbl-water">水<br>(腎)</div>
+    </div>
+
+    <div class="bar-container">
+      <div style="display:flex; justify-content:space-between;"><span>WOOD (怒/目/筋)</span><span id="val-wood">0%</span></div>
+      <div class="status-bar"><div class="status-fill" id="bar-wood" style="background:var(--wood);"></div></div>
+      
+      <div style="display:flex; justify-content:space-between;"><span>FIRE (喜/舌/神)</span><span id="val-fire">0%</span></div>
+      <div class="status-bar"><div class="status-fill" id="bar-fire" style="background:var(--fire);"></div></div>
+      
+      <div style="display:flex; justify-content:space-between;"><span>EARTH (思/口/胃)</span><span id="val-earth">0%</span></div>
+      <div class="status-bar"><div class="status-fill" id="bar-earth" style="background:var(--earth);"></div></div>
+      
+      <div style="display:flex; justify-content:space-between;"><span>METAL (悲/鼻/皮)</span><span id="val-metal">0%</span></div>
+      <div class="status-bar"><div class="status-fill" id="bar-metal" style="background:var(--metal);"></div></div>
+      
+      <div style="display:flex; justify-content:space-between;"><span>WATER (恐/耳/骨)</span><span id="val-water">0%</span></div>
+      <div class="status-bar"><div class="status-fill" id="bar-water" style="background:var(--water);"></div></div>
+    </div>
+
+    <div id="prescription">
+      <div class="patch-title">>> SYSTEM PATCH (推奨行動):</div>
+      <div class="patch-content" id="patchText">
+        解析待機中...
+      </div>
+    </div>
+
+  </div>
+
+  <div style="border-bottom:1px solid #333; margin:30px 0;"></div>
+
+  <div style="text-align:center;">
+    <div style="font-size:12px; margin-bottom:10px;">AXIS TUNING (軸・調整)</div>
+    <div id="tuningArea">
+      <div class="tuning-circle">
+        <div class="tuning-core"></div>
+      </div>
+      <div class="breath-text">Inhale (Torque)...</div>
+    </div>
+    <button onclick="toggleTuning()" style="margin-top:20px; background:transparent; border:1px solid #555; color:#888; padding:5px 15px; font-size:10px;">
+      START / STOP
+    </button>
+  </div>
+
+  <script>
+    // === データ：五行の症状と対策 ===
+    // Uさんのアップロード資料に基づく
+    const SYMPTOMS = [
+      { text: "イライラする / 怒りっぽい", type: "wood" },
+      { text: "目が疲れる / 視力低下", type: "wood" },
+      { text: "筋肉が張る / 肩こり", type: "wood" },
+      { text: "動悸がする / テンション不安定", type: "fire" },
+      { text: "不眠 / 夢をよく見る", type: "fire" },
+      { text: "考えすぎる / 不安が回る", type: "earth" },
+      { text: "胃もたれ / 食欲不振", type: "earth" },
+      { text: "口内炎 / 唇の荒れ", type: "earth" },
+      { text: "悲しい / 落ち込みやすい", type: "metal" },
+      { text: "肌荒れ / 乾燥", type: "metal" },
+      { text: "呼吸が浅い / 咳が出る", type: "metal" },
+      { text: "怖い / ビクビクする", type: "water" },
+      { text: "耳鳴り / 聴力低下", type: "water" },
+      { text: "腰痛 / 骨・歯の弱り", type: "water" },
+      { text: "冷え性 / トイレが近い", type: "water" }
+    ];
+
+    const ADVICE = {
+      wood: "【木(肝)の過熱】<br>怒りと目の酷使でエンジンが焼き付いています。<br>▶ 行動：酸味（酢・梅干し）を摂る。深呼吸して「の」の字を書く。<br>▶ 魔法：夜11時〜3時はスマホを見ずに目を閉じる（肝の修復時間）。",
+      fire: "【火(心)の暴走】<br>喜びすぎや焦りで心が空回りしています。<br>▶ 行動：苦味（コーヒー・ゴーヤ）を少量摂る。汗をかきすぎない。<br>▶ 魔法：舌先を上顎につけて、静かに3分座る。",
+      earth: "【土(脾)の停滞】<br>「思い悩み」が消化器を止めています。<br>▶ 行動：自然な甘味（芋・栗）を摂る。冷たい飲み物を禁止。<br>▶ 魔法：裸足で土の上を歩くか、踵（かかと）落とし運動をする。",
+      metal: "【金(肺)の乾燥】<br>悲しみと乾燥でバリア機能（皮膚）が低下中。<br>▶ 行動：辛味（生姜・ネギ）で発散させる。白い食べ物（大根・豆腐）を食べる。<br>▶ 魔法：皮膚を乾布摩擦し、「自分と他人の境界線」を意識する。",
+      water: "【水(腎)の枯渇】<br>根源的な「恐れ」が生命力を削っています。<br>▶ 行動：塩辛いもの（海藻・味噌）を摂る。腰（腎臓）をカイロで温める。<br>▶ 魔法：黒い服を着る。静かな場所で耳を澄ます。"
+    };
+
+    // 初期化
+    const list = document.getElementById('symptomList');
+    SYMPTOMS.forEach(s => {
+      const btn = document.createElement('div');
+      btn.className = 'check-btn';
+      btn.innerText = s.text;
+      btn.dataset.type = s.type;
+      btn.onclick = () => btn.classList.toggle('active');
+      list.appendChild(btn);
+    });
+
+    function runDiagnosis() {
+      // 集計
+      const scores = { wood:0, fire:0, earth:0, metal:0, water:0 };
+      let total = 0;
+      
+      document.querySelectorAll('.check-btn.active').forEach(btn => {
+        scores[btn.dataset.type]++;
+        total++;
+      });
+
+      if(total === 0) {
+        alert("症状を選択してください。");
+        return;
+      }
+
+      // グラフ反映
+      const max = Math.max(...Object.values(scores)) || 1; // 0除算防止
+      
+      for(let key in scores) {
+        const percent = (scores[key] / max) * 100;
+        document.getElementById(`bar-${key}`).style.width = `${percent}%`;
+        document.getElementById(`val-${key}`).innerText = scores[key] > 0 ? "WARNING" : "OK";
+      }
+
+      // 最大の問題点へのアドバイスを表示
+      let worstType = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+      if(scores[worstType] === 0) worstType = null;
+
+      const patchArea = document.getElementById('prescription');
+      const patchText = document.getElementById('patchText');
+      const resultArea = document.getElementById('resultArea');
+
+      resultArea.style.opacity = 1;
+      resultArea.style.pointerEvents = "auto";
+      patchArea.style.display = "block";
+
+      if(worstType) {
+        patchText.innerHTML = ADVICE[worstType];
+      } else {
+        patchText.innerText = "異常なし。現在の状態は安定しています。";
+      }
+      
+      // RPG側へのデータ連携（例：localStorageに記録してRPG側でイベント発生など）
+      // localStorage.setItem('grimoire_status', JSON.stringify(scores));
+    }
+
+    // 軸チューニング
+    let isTuning = false;
+    function toggleTuning() {
+      const area = document.getElementById('tuningArea');
+      isTuning = !isTuning;
+      if(isTuning) {
+        area.classList.add('tuning-active');
+      } else {
+        area.classList.remove('tuning-active');
+      }
+    }
+  </script>
+</body>
+</html>
