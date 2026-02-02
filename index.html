@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>GRIMOIRE RPG</title>
+  <title>GRIMOIRE RPG: COMMAND</title>
   <style>
     :root{
       --bg: #0b0d10;
       --text: #e9edf2;
       --gold: #c5a365;
       --red: #ff4a4a;
+      --blue: #4facfe;
+      --term: #0f0;
       --bar-bg: #1a1f29;
       --glass: rgba(255, 255, 255, 0.05);
       --glass-hover: rgba(255, 255, 255, 0.1);
@@ -22,9 +24,10 @@
       padding-top: 70px;
       padding-bottom: 80px;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* === HUD === */
+    /* === HUD (ステータスバー) === */
     .hud-bar {
       position: fixed;
       top: 0; left: 0; width: 100%;
@@ -48,6 +51,7 @@
       font-size: 9px; color: var(--gold);
       margin-right: 12px;
       flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(197, 163, 101, 0.2);
     }
     .level-num { font-size: 20px; font-weight: bold; line-height: 1; }
     .exp-container { flex: 1; }
@@ -62,12 +66,40 @@
 
     /* === メインエリア === */
     main { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
-    h1 { font-size: 22px; text-align: center; margin-bottom: 30px; color: var(--gold); letter-spacing: 0.2em; text-shadow: 0 0 10px rgba(197, 163, 101, 0.3); }
     
-    .section-title {
-      font-size: 14px; color: #888; margin: 30px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px;
+    h1 { 
+      font-size: 24px; text-align: center; margin-bottom: 10px; color: var(--gold); 
+      letter-spacing: 0.2em; text-shadow: 0 0 15px rgba(197, 163, 101, 0.4); 
+    }
+    .sub-title {
+      text-align: center; font-size: 10px; color: #666; margin-bottom: 30px; letter-spacing: 0.1em;
     }
 
+    /* === システムゲート (リンクボタン) === */
+    .gate-container {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;
+    }
+    .gate-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 15px 10px; border-radius: 8px; text-decoration: none;
+      transition: 0.2s; border: 1px solid #333; background: rgba(0,0,0,0.5);
+    }
+    .gate-btn:active { transform: scale(0.98); }
+    
+    /* BIOS GATE */
+    .gate-bios { border-color: var(--blue); color: var(--blue); }
+    .gate-bios:hover { background: rgba(79, 172, 254, 0.1); box-shadow: 0 0 15px rgba(79, 172, 254, 0.2); }
+    .gate-icon { font-size: 20px; margin-bottom: 5px; }
+    .gate-label { font-size: 10px; font-weight: bold; letter-spacing: 0.05em; }
+
+    /* KERNEL GATE */
+    .gate-kernel { border-color: var(--term); color: var(--term); font-family: "Courier New", monospace; }
+    .gate-kernel:hover { background: rgba(0, 255, 0, 0.1); box-shadow: 0 0 15px rgba(0, 255, 0, 0.2); }
+
+    /* === コンテンツカード === */
+    .section-title {
+      font-size: 12px; color: #888; margin: 30px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; letter-spacing: 0.1em;
+    }
     .card {
       background: var(--glass);
       border: 1px solid rgba(255,255,255,0.1);
@@ -76,43 +108,44 @@
       margin-bottom: 12px;
       transition: all 0.2s;
     }
-    .card:active { transform: scale(0.98); background: var(--glass-hover); }
-    
+    .card .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 9px; margin-bottom: 8px; border: 1px solid #444; color: #aaa; }
     .card h3 { margin: 0 0 5px 0; font-size: 16px; color: var(--text); }
-    .card p { margin: 0; font-size: 12px; color: #aaa; line-height: 1.5; }
-    .card .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-bottom: 8px; border: 1px solid #444; }
+    .card p { margin: 0; font-size: 12px; color: #aaa; line-height: 1.6; }
+
+    /* === 九字切り === */
+    .kuji-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 20px auto; }
+    .kuji-cell { 
+      aspect-ratio: 1; border: 1px solid #555; display: flex; align-items: center; justify-content: center; 
+      border-radius: 4px; font-size: 18px; color: #666; transition: 0.1s; cursor: pointer;
+    }
+    .kuji-cell.active { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); border-color: var(--gold); transform: scale(1.05); }
 
     /* === モンスター図鑑 === */
     .monster-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .monster-card { 
-      background: #151515; border: 1px solid #333; padding: 10px; border-radius: 6px; text-align: center; position: relative;
+      background: #151515; border: 1px solid #333; padding: 12px 8px; border-radius: 6px; text-align: center; position: relative; cursor: pointer;
     }
-    .monster-icon { font-size: 24px; margin-bottom: 5px; filter: grayscale(100%); transition: 0.3s; }
-    .monster-card.collected .monster-icon { filter: grayscale(0%); text-shadow: 0 0 10px var(--red); }
-    .monster-name { font-size: 12px; font-weight: bold; }
-    .monster-weakness { font-size: 10px; color: #ff6b6b; margin-top: 4px; display: none; }
+    .monster-icon { font-size: 28px; margin-bottom: 8px; filter: grayscale(100%) opacity(0.5); transition: 0.3s; }
+    .monster-card.collected .monster-icon { filter: grayscale(0%) opacity(1); text-shadow: 0 0 15px var(--red); transform: scale(1.1); }
+    .monster-name { font-size: 11px; font-weight: bold; margin-bottom: 4px; }
+    .monster-weakness { font-size: 9px; color: #ff6b6b; display: none; line-height: 1.4; }
     .monster-card.collected .monster-weakness { display: block; }
+    .new-badge { 
+      position: absolute; top: -5px; right: -5px; background: var(--red); color: #fff; font-size: 8px; padding: 2px 5px; border-radius: 4px; display: none; 
+    }
 
     /* === 装備スロット === */
     .equip-slot {
       display: flex; align-items: center; background: #1a1a1a; border: 1px solid #444; 
       padding: 10px; border-radius: 6px; margin-bottom: 8px;
     }
-    .equip-icon { width: 40px; height: 40px; background: #000; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; border: 1px solid #555; }
+    .equip-icon { width: 36px; height: 36px; background: #000; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 12px; border: 1px solid #555; border-radius: 4px; }
     .equip-info { flex: 1; }
     .equip-btn { 
       background: transparent; border: 1px solid var(--gold); color: var(--gold); 
-      padding: 4px 10px; font-size: 10px; border-radius: 20px;
+      padding: 4px 12px; font-size: 10px; border-radius: 20px; cursor: pointer; transition: 0.2s;
     }
-    .equip-btn.equipped { background: var(--gold); color: #000; }
-
-    /* === 九字切り === */
-    .kuji-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 20px auto; }
-    .kuji-cell { 
-      aspect-ratio: 1; border: 1px solid #555; display: flex; align-items: center; justify-content: center; 
-      border-radius: 4px; font-size: 18px; color: #666; transition: 0.1s;
-    }
-    .kuji-cell.active { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); border-color: var(--gold); transform: scale(1.05); }
+    .equip-btn.equipped { background: var(--gold); color: #000; font-weight: bold; }
 
     /* === モーダル === */
     .modal-overlay {
@@ -120,6 +153,7 @@
       background: rgba(0,0,0,0.85); z-index: 2000;
       display: flex; align-items: center; justify-content: center;
       opacity: 0; pointer-events: none; transition: 0.3s;
+      backdrop-filter: blur(2px);
     }
     .modal-overlay.show { opacity: 1; pointer-events: auto; }
     .modal-box {
@@ -133,8 +167,6 @@
       background: var(--gold); color: #000; border: none; padding: 10px 30px; font-weight: bold; border-radius: 30px; cursor: pointer;
     }
 
-    /* 封印 */
-    .locked-content { opacity: 0.4; pointer-events: none; filter: blur(2px); }
   </style>
 </head>
 <body>
@@ -157,26 +189,36 @@
 
   <main>
     <h1>GRIMOIRE</h1>
+    <div class="sub-title">REALITY HACKING INTERFACE</div>
+
+    <div class="gate-container">
+      <a href="./grimoire_bios.html" class="gate-btn gate-bios">
+        <div class="gate-icon">⚕</div>
+        <div class="gate-label">SYSTEM DIAGNOSIS<br>(身体メンテナンス)</div>
+      </a>
+      <a href="./grimoire_kernel.html" class="gate-btn gate-kernel">
+        <div class="gate-icon">>_</div>
+        <div class="gate-label">ACCESS KERNEL<br>(脳内OS書き換え)</div>
+      </a>
+    </div>
 
     <div class="card">
-      <div class="tag" style="color:#aaa; border-color:#aaa;">儀式魔法</div>
+      <div class="tag">RITUAL MAGIC</div>
       <h3>早九字（ハヤクジ）</h3>
-      <p>順にタップし、脳のワーキングメモリを強制占有する。</p>
+      <p>順にタップし、脳のワーキングメモリを強制占有する。<br>パニック時や始業前の儀式として使用。</p>
       <div class="kuji-grid" id="kujiGrid"></div>
       <div id="kujiLabel" style="text-align:center; font-size:12px; height:20px; color:var(--gold); margin-top:10px;"></div>
     </div>
 
     <div class="section-title">EQUIPMENT (身体操作)</div>
-    <div id="equipmentList">
-      </div>
+    <div id="equipmentList"></div>
 
     <div class="section-title">BESTIARY (観測された鬼)</div>
-    <div class="monster-list" id="monsterList">
-      </div>
+    <div class="monster-list" id="monsterList"></div>
     
     <div style="text-align:center; margin-top:40px; margin-bottom: 20px;">
-      <a href="https://ameblo.jp/orenoadores0224yj/" target="_blank" style="color:#666; font-size:12px; text-decoration:none; border-bottom:1px solid #444;">
-        夜21時の文脈編集室へ (Login) ＞
+      <a href="https://ameblo.jp/orenoadores0224yj/" target="_blank" style="color:#666; font-size:12px; text-decoration:none; border-bottom:1px solid #444; padding-bottom:2px;">
+        夜21時の文脈編集室 (Blog Login) ＞
       </a>
     </div>
 
@@ -187,46 +229,49 @@
       <div class="modal-title">DAILY QUEST</div>
       <div class="modal-text" id="dailyQuestText">
         </div>
-      <button class="modal-btn" onclick="acceptQuest()">承諾する</button>
+      <button class="modal-btn" onclick="acceptQuest()">受注する (ACCEPT)</button>
     </div>
   </div>
 
   <div class="modal-overlay" id="levelupModal">
-    <div class="modal-box" style="border-color:#4facfe;">
+    <div class="modal-box" style="border-color:#4facfe; box-shadow:0 0 30px rgba(79, 172, 254, 0.3);">
       <div class="modal-title" style="color:#4facfe;">LEVEL UP!</div>
-      <div class="modal-text" style="text-align:center;">
+      <div class="modal-text" style="text-align:center; margin-bottom:20px;">
         精神階梯が上昇しました。<br>
-        新たな領域が解放されます。
+        新たな領域（身体・言語）へアクセス可能です。
       </div>
-      <button class="modal-btn" style="background:#4facfe;" onclick="closeLevelUp()">確認</button>
+      <button class="modal-btn" style="background:#4facfe;" onclick="closeLevelUp()">CONFIRM</button>
     </div>
   </div>
 
   <script>
-    // === データ定義（ここをいじるとコンテンツが変わります） ===
+    // === データ定義 ===
     
     // デイリークエストのリスト
     const QUESTS = [
-      { title: "【観測】赤の探索", desc: "今日1日、視界に入る「赤いもの」を全てアイテムとして認識せよ。<br>報酬：脳内フィルタのリセット" },
+      { title: "【観測】赤の探索", desc: "今日1日、視界に入る「赤いもの」を全てアイテムとして認識せよ。<br>報酬：RAS（脳内フィルタ）の再設定" },
       { title: "【対人】NPCへの挨拶", desc: "コンビニ店員や同僚を、ストーリー進行に必要なNPCと見なし、目を見て「ありがとう」と言え。<br>報酬：対人恐怖デバフの解除" },
       { title: "【身体】踵（かかと）のアンカー", desc: "信号待ちの間、重心を踵に落とし、地球と接続せよ。<br>報酬：グラウンディング強度UP" },
       { title: "【儀式】水の浄化", desc: "手を洗う時、冷たさを3秒間だけ全神経で感じ取れ。<br>報酬：思考ノイズの強制停止" },
-      { title: "【言語】60点の呪文", desc: "失敗しそうな時、心の中で「ま、いっか」と唱えよ。<br>報酬：完璧主義ゴーレムの弱体化" }
+      { title: "【言語】60点の呪文", desc: "失敗しそうな時、心の中で「ま、いっか」と唱えよ。<br>報酬：完璧主義ゴーレムの弱体化" },
+      { title: "【五行】木の養生", desc: "PC作業の合間に、遠くの緑を見るか、目を閉じて眼球を休めよ。<br>報酬：肝のクレンジング" }
     ];
 
-    // 魔物図鑑データ
+    // 魔物図鑑データ（Uさんの経験より）
     const MONSTERS = [
-      { id: 1, name: "沈黙の亡霊", icon: "👻", desc: "会話が途切れた瞬間に現れ、心臓を締め付ける。", weak: "弱点：水を飲む / 待つ" },
+      { id: 1, name: "沈黙の亡霊", icon: "👻", desc: "会話が途切れた瞬間に現れ、心臓を締め付ける。", weak: "弱点：水を飲む / 相手を待つ" },
       { id: 2, name: "視線の眼球", icon: "👁", desc: "「見られている」という感覚を作り出す幻影。", weak: "弱点：周辺視野を広げる" },
       { id: 3, name: "完璧の石像", icon: "🗿", desc: "「ちゃんとしなきゃ」と囁き、体を重くする。", weak: "弱点：「60点でいい」と唱える" },
-      { id: 4, name: "焦燥の炎", icon: "🔥", desc: "理由もなく「急がなきゃ」と脈を速める。", weak: "弱点：踵に重心を落とす" }
+      { id: 4, name: "焦燥の炎", icon: "🔥", desc: "理由もなく「急がなきゃ」と脈を速める。", weak: "弱点：踵に重心を落とす" },
+      { id: 5, name: "孤立の深淵", icon: "🕳", desc: "「誰も助けてくれない」という錯覚を見せる。", weak: "弱点：BIOSで身体を整える" }
     ];
 
     // 装備データ
     const EQUIPMENTS = [
-      { id: 1, name: "ホークアイ (頭)", icon: "🧢", effect: "周辺視野拡張", desc: "遠くの看板の文字を3秒見る。一点集中を解除し、脳の並列処理を上げる。" },
+      { id: 1, name: "ホークアイ (頭)", icon: "🧢", effect: "視野拡張", desc: "遠くの看板の文字を3秒見る。一点集中を解除し、脳の並列処理を上げる。" },
       { id: 2, name: "重力アンカー (胴)", icon: "🥋", effect: "不動心", desc: "息を吐きながら、体重を踵（かかと）に落とす。他人の感情に流されなくなる。" },
-      { id: 3, name: "冷水の護符 (飾)", icon: "💧", effect: "覚醒", desc: "朝、冷水を浴びるか、手首を冷やす。迷走神経を刺激しモードを切り替える。" }
+      { id: 3, name: "冷水の護符 (飾)", icon: "💧", effect: "覚醒", desc: "朝、冷水を浴びるか、手首を冷やす。迷走神経を刺激しモードを切り替える。" },
+      { id: 4, name: "虚無の外套 (背)", icon: "🌫", desc: "トイレの個室で3分間、何も考えず「ただの肉体」に戻る。", effect: "リセット" }
     ];
 
     // === システムロジック ===
@@ -234,7 +279,7 @@
     let exp = parseInt(localStorage.getItem('grimoire_exp')) || 0;
     let maxExp = level * 100;
     
-    // 初期化
+    // 初期化実行
     init();
 
     function init() {
@@ -245,13 +290,12 @@
       checkLoginBonus();
     }
 
-    // デイリークエスト表示
+    // デイリークエスト
     function checkLoginBonus() {
       const lastLogin = localStorage.getItem('last_login_date');
       const today = new Date().toDateString();
       
       if (lastLogin !== today) {
-        // ランダムにクエスト選択
         const quest = QUESTS[Math.floor(Math.random() * QUESTS.length)];
         document.getElementById('dailyQuestText').innerHTML = `<strong>${quest.title}</strong><br><br>${quest.desc}`;
         document.getElementById('dailyModal').classList.add('show');
@@ -262,11 +306,12 @@
       const today = new Date().toDateString();
       localStorage.setItem('last_login_date', today);
       document.getElementById('dailyModal').classList.remove('show');
-      addExp(20); // ログインボーナスEXP
-      alert("クエストを受注しました。\nEXP +20 獲得");
+      addExp(20);
+      // バイブレーション（対応機種のみ）
+      if(navigator.vibrate) navigator.vibrate(50);
     }
 
-    // EXP加算
+    // EXP加算 & レベルアップ
     function addExp(amount) {
       exp += amount;
       if (exp >= maxExp) {
@@ -283,6 +328,7 @@
       maxExp = level * 100;
       saveData();
       document.getElementById('levelupModal').classList.add('show');
+      if(navigator.vibrate) navigator.vibrate([100,50,100]);
     }
     
     function closeLevelUp() {
@@ -300,27 +346,28 @@
       localStorage.setItem('grimoire_exp', exp);
     }
 
-    // レンダリング系
+    // コンテンツ描画系
     function renderMonsters() {
       const container = document.getElementById('monsterList');
       container.innerHTML = "";
       MONSTERS.forEach(m => {
-        // タップで「討伐（収集）」したことにする演出
+        const isCollected = localStorage.getItem('monster_'+m.id);
         const div = document.createElement('div');
-        div.className = `monster-card ${localStorage.getItem('monster_'+m.id) ? 'collected' : ''}`;
+        div.className = `monster-card ${isCollected ? 'collected' : ''}`;
         div.innerHTML = `
           <div class="monster-icon">${m.icon}</div>
           <div class="monster-name">${m.name}</div>
           <div class="monster-weakness">${m.weak}</div>
+          ${!isCollected ? '' : '<div class="new-badge">討伐済</div>'}
         `;
         div.onclick = () => {
-          if(!localStorage.getItem('monster_'+m.id)) {
+          if(!isCollected) {
             localStorage.setItem('monster_'+m.id, true);
             div.classList.add('collected');
             addExp(30);
-            alert(`${m.name} を図鑑に登録しました。\n「弱点」が開示されます。`);
+            alert(`【観測成功】\n${m.name} を図鑑に登録しました。\n対処法（弱点）が開示されます。`);
           } else {
-            alert(m.desc);
+            alert(`${m.name}\n\n${m.desc}\n\n【対処法】\n${m.weak}`);
           }
         };
         container.appendChild(div);
@@ -337,14 +384,14 @@
         div.innerHTML = `
           <div class="equip-icon">${e.icon}</div>
           <div class="equip-info">
-            <div style="font-weight:bold; font-size:14px; color:#eee;">${e.name}</div>
+            <div style="font-weight:bold; font-size:13px; color:#eee;">${e.name}</div>
             <div style="font-size:10px; color:#888;">効果: ${e.effect}</div>
           </div>
           <button class="equip-btn ${isEquipped ? 'equipped' : ''}" onclick="toggleEquip(${e.id}, this)">
             ${isEquipped ? 'E' : '装備'}
           </button>
         `;
-        div.onclick = (ev) => { if(ev.target.tagName !== 'BUTTON') alert(e.desc); };
+        div.onclick = (ev) => { if(ev.target.tagName !== 'BUTTON') alert(`${e.name}\n\n${e.desc}`); };
         container.appendChild(div);
       });
     }
@@ -356,12 +403,11 @@
         btn.classList.remove('equipped');
         btn.innerText = "装備";
       } else {
-        // 他の同じ部位を外す処理は省略（シンプルに全部装備可能にする）
         localStorage.setItem(key, true);
         btn.classList.add('equipped');
         btn.innerText = "E";
         addExp(10);
-        alert("装備しました。\n意識が書き換わります。");
+        alert("装備しました。\n意識の設定を書き換えました。");
       }
     };
 
@@ -392,7 +438,7 @@
           } else {
             step = 0;
             document.querySelectorAll('.kuji-cell').forEach(c => c.classList.remove('active'));
-            if(navigator.vibrate) navigator.vibrate(200);
+            if(navigator.vibrate) navigator.vibrate(100);
           }
         };
         grid.appendChild(cell);
