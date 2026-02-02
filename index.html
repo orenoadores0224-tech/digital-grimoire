@@ -9,24 +9,26 @@
       --bg: #0b0d10;
       --text: #e9edf2;
       --gold: #c5a365;
+      --red: #ff4a4a;
       --bar-bg: #1a1f29;
-      --bar-fill: #d7e3ff;
       --glass: rgba(255, 255, 255, 0.05);
+      --glass-hover: rgba(255, 255, 255, 0.1);
     }
     body {
       margin: 0;
       font-family: "Hiragino Mincho ProN", serif;
       background: var(--bg);
       color: var(--text);
-      padding-top: 60px; /* ステータスバーの分空ける */
+      padding-top: 70px;
       padding-bottom: 80px;
+      overflow-x: hidden;
     }
 
-    /* === RPGステータスバー (HUD) === */
+    /* === HUD === */
     .hud-bar {
       position: fixed;
       top: 0; left: 0; width: 100%;
-      height: 56px;
+      height: 60px;
       background: rgba(11, 13, 16, 0.95);
       border-bottom: 1px solid rgba(255,255,255,0.1);
       z-index: 1000;
@@ -34,70 +36,105 @@
       align-items: center;
       padding: 0 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-sizing: border-box;
     }
     .level-circle {
-      width: 40px; height: 40px;
+      width: 44px; height: 44px;
       border: 2px solid var(--gold);
       border-radius: 50%;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       background: #000;
-      font-size: 8px; color: var(--gold);
+      font-size: 9px; color: var(--gold);
       margin-right: 12px;
+      flex-shrink: 0;
     }
-    .level-num { font-size: 18px; font-weight: bold; line-height: 1; }
+    .level-num { font-size: 20px; font-weight: bold; line-height: 1; }
     .exp-container { flex: 1; }
-    .exp-label { font-size: 10px; color: #888; display: flex; justify-content: space-between; margin-bottom: 2px; }
+    .exp-label { font-size: 10px; color: #888; display: flex; justify-content: space-between; margin-bottom: 4px; }
     .exp-bar-bg {
       height: 6px; background: var(--bar-bg); border-radius: 3px; overflow: hidden;
     }
     .exp-bar-fill {
-      height: 100%; background: linear-gradient(90deg, #4facfe, #00f2fe);
+      height: 100%; background: linear-gradient(90deg, #c5a365, #f9d423);
       width: 0%; transition: width 0.5s ease-out;
     }
 
-    /* コンテンツエリア */
+    /* === メインエリア === */
     main { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
-    h1 { font-size: 20px; text-align: center; margin-bottom: 40px; color: var(--gold); letter-spacing: 0.2em; }
+    h1 { font-size: 22px; text-align: center; margin-bottom: 30px; color: var(--gold); letter-spacing: 0.2em; text-shadow: 0 0 10px rgba(197, 163, 101, 0.3); }
     
+    .section-title {
+      font-size: 14px; color: #888; margin: 30px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px;
+    }
+
     .card {
       background: var(--glass);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 16px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
     }
+    .card:active { transform: scale(0.98); background: var(--glass-hover); }
     
-    /* 封印されたコンテンツ */
-    .locked-content {
-      position: relative;
-      opacity: 0.5;
-      filter: grayscale(100%);
-      pointer-events: none;
-    }
-    .lock-overlay {
-      position: absolute; top:0; left:0; width:100%; height:100%;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.6);
-      border-radius: 12px;
-      color: #ff6b6b; font-weight: bold; letter-spacing: 0.1em;
-      z-index: 10;
-    }
+    .card h3 { margin: 0 0 5px 0; font-size: 16px; color: var(--text); }
+    .card p { margin: 0; font-size: 12px; color: #aaa; line-height: 1.5; }
+    .card .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-bottom: 8px; border: 1px solid #444; }
 
-    /* 九字切りグリッド */
-    .kuji-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 200px; margin: 20px auto; }
-    .kuji-cell { aspect-ratio: 1; border: 1px solid #444; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
-    .kuji-cell.active { background: var(--gold); color: #000; box-shadow: 0 0 10px var(--gold); }
+    /* === モンスター図鑑 === */
+    .monster-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .monster-card { 
+      background: #151515; border: 1px solid #333; padding: 10px; border-radius: 6px; text-align: center; position: relative;
+    }
+    .monster-icon { font-size: 24px; margin-bottom: 5px; filter: grayscale(100%); transition: 0.3s; }
+    .monster-card.collected .monster-icon { filter: grayscale(0%); text-shadow: 0 0 10px var(--red); }
+    .monster-name { font-size: 12px; font-weight: bold; }
+    .monster-weakness { font-size: 10px; color: #ff6b6b; margin-top: 4px; display: none; }
+    .monster-card.collected .monster-weakness { display: block; }
 
-    /* レベルアップ演出 */
-    #levelup-overlay {
+    /* === 装備スロット === */
+    .equip-slot {
+      display: flex; align-items: center; background: #1a1a1a; border: 1px solid #444; 
+      padding: 10px; border-radius: 6px; margin-bottom: 8px;
+    }
+    .equip-icon { width: 40px; height: 40px; background: #000; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; border: 1px solid #555; }
+    .equip-info { flex: 1; }
+    .equip-btn { 
+      background: transparent; border: 1px solid var(--gold); color: var(--gold); 
+      padding: 4px 10px; font-size: 10px; border-radius: 20px;
+    }
+    .equip-btn.equipped { background: var(--gold); color: #000; }
+
+    /* === 九字切り === */
+    .kuji-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 20px auto; }
+    .kuji-cell { 
+      aspect-ratio: 1; border: 1px solid #555; display: flex; align-items: center; justify-content: center; 
+      border-radius: 4px; font-size: 18px; color: #666; transition: 0.1s;
+    }
+    .kuji-cell.active { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); border-color: var(--gold); transform: scale(1.05); }
+
+    /* === モーダル === */
+    .modal-overlay {
       position: fixed; top:0; left:0; width:100%; height:100%;
-      background: rgba(0,0,0,0.9);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.5s;
+      background: rgba(0,0,0,0.85); z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: 0.3s;
     }
-    #levelup-overlay.show { opacity: 1; pointer-events: auto; }
-    .levelup-text { font-size: 40px; color: var(--gold); text-shadow: 0 0 20px var(--gold); margin-bottom: 20px; }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      background: #111; border: 1px solid var(--gold); padding: 24px; border-radius: 12px;
+      width: 85%; max-width: 320px; text-align: center;
+      box-shadow: 0 0 30px rgba(197, 163, 101, 0.2);
+    }
+    .modal-title { color: var(--gold); font-size: 18px; margin-bottom: 12px; font-weight: bold; }
+    .modal-text { font-size: 13px; line-height: 1.6; color: #ccc; margin-bottom: 20px; text-align: left; }
+    .modal-btn {
+      background: var(--gold); color: #000; border: none; padding: 10px 30px; font-weight: bold; border-radius: 30px; cursor: pointer;
+    }
+
+    /* 封印 */
+    .locked-content { opacity: 0.4; pointer-events: none; filter: blur(2px); }
   </style>
 </head>
 <body>
@@ -109,7 +146,7 @@
     </div>
     <div class="exp-container">
       <div class="exp-label">
-        <span>EXP</span>
+        <span>MENTAL EXP</span>
         <span id="expText">0 / 100</span>
       </div>
       <div class="exp-bar-bg">
@@ -122,85 +159,140 @@
     <h1>GRIMOIRE</h1>
 
     <div class="card">
+      <div class="tag" style="color:#aaa; border-color:#aaa;">儀式魔法</div>
       <h3>早九字（ハヤクジ）</h3>
-      <p style="font-size:12px; color:#888;">精神統一の儀式。成功で +50 EXP。</p>
+      <p>順にタップし、脳のワーキングメモリを強制占有する。</p>
       <div class="kuji-grid" id="kujiGrid"></div>
-      <div id="kujiLabel" style="text-align:center; font-size:12px; height:20px; color:var(--gold);"></div>
+      <div id="kujiLabel" style="text-align:center; font-size:12px; height:20px; color:var(--gold); margin-top:10px;"></div>
     </div>
 
-    <div class="card locked-content" id="secretContent1">
-      <div class="lock-overlay">🔒 封印 (Lv.3で解除)</div>
-      <h3>【秘伝】ミトコンドリア活性術</h3>
-      <p>細胞レベルでエネルギーを生成する栄養学の基礎。</p>
-      <div style="margin-top:10px; padding:10px; background:#222; font-size:12px;">
-        （ここはまだ読めない文章です...）
+    <div class="section-title">EQUIPMENT (身体操作)</div>
+    <div id="equipmentList">
       </div>
-    </div>
 
-    <div class="card locked-content" id="secretContent2">
-      <div class="lock-overlay">🔒 封印 (Lv.5で解除)</div>
-      <h3>【奥義】骨格連動と重力操作</h3>
-      <p>筋力を使わずに相手を崩す、カイロプラクティックの極意。</p>
-    </div>
-
-    <div style="text-align:center; margin-top:40px;">
-      <a href="https://ameblo.jp/orenoadores0224yj/" style="color:#666; font-size:12px; text-decoration:none;">夜21時の文脈編集室へ ＞</a>
+    <div class="section-title">BESTIARY (観測された鬼)</div>
+    <div class="monster-list" id="monsterList">
+      </div>
+    
+    <div style="text-align:center; margin-top:40px; margin-bottom: 20px;">
+      <a href="https://ameblo.jp/orenoadores0224yj/" target="_blank" style="color:#666; font-size:12px; text-decoration:none; border-bottom:1px solid #444;">
+        夜21時の文脈編集室へ (Login) ＞
+      </a>
     </div>
 
   </main>
 
-  <div id="levelup-overlay" onclick="this.classList.remove('show')">
-    <div class="levelup-text">LEVEL UP!</div>
-    <div style="color:#fff;">タップして再開</div>
+  <div class="modal-overlay" id="dailyModal">
+    <div class="modal-box">
+      <div class="modal-title">DAILY QUEST</div>
+      <div class="modal-text" id="dailyQuestText">
+        </div>
+      <button class="modal-btn" onclick="acceptQuest()">承諾する</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="levelupModal">
+    <div class="modal-box" style="border-color:#4facfe;">
+      <div class="modal-title" style="color:#4facfe;">LEVEL UP!</div>
+      <div class="modal-text" style="text-align:center;">
+        精神階梯が上昇しました。<br>
+        新たな領域が解放されます。
+      </div>
+      <button class="modal-btn" style="background:#4facfe;" onclick="closeLevelUp()">確認</button>
+    </div>
   </div>
 
   <script>
-    // === RPGシステムの中枢 ===
+    // === データ定義（ここをいじるとコンテンツが変わります） ===
+    
+    // デイリークエストのリスト
+    const QUESTS = [
+      { title: "【観測】赤の探索", desc: "今日1日、視界に入る「赤いもの」を全てアイテムとして認識せよ。<br>報酬：脳内フィルタのリセット" },
+      { title: "【対人】NPCへの挨拶", desc: "コンビニ店員や同僚を、ストーリー進行に必要なNPCと見なし、目を見て「ありがとう」と言え。<br>報酬：対人恐怖デバフの解除" },
+      { title: "【身体】踵（かかと）のアンカー", desc: "信号待ちの間、重心を踵に落とし、地球と接続せよ。<br>報酬：グラウンディング強度UP" },
+      { title: "【儀式】水の浄化", desc: "手を洗う時、冷たさを3秒間だけ全神経で感じ取れ。<br>報酬：思考ノイズの強制停止" },
+      { title: "【言語】60点の呪文", desc: "失敗しそうな時、心の中で「ま、いっか」と唱えよ。<br>報酬：完璧主義ゴーレムの弱体化" }
+    ];
+
+    // 魔物図鑑データ
+    const MONSTERS = [
+      { id: 1, name: "沈黙の亡霊", icon: "👻", desc: "会話が途切れた瞬間に現れ、心臓を締め付ける。", weak: "弱点：水を飲む / 待つ" },
+      { id: 2, name: "視線の眼球", icon: "👁", desc: "「見られている」という感覚を作り出す幻影。", weak: "弱点：周辺視野を広げる" },
+      { id: 3, name: "完璧の石像", icon: "🗿", desc: "「ちゃんとしなきゃ」と囁き、体を重くする。", weak: "弱点：「60点でいい」と唱える" },
+      { id: 4, name: "焦燥の炎", icon: "🔥", desc: "理由もなく「急がなきゃ」と脈を速める。", weak: "弱点：踵に重心を落とす" }
+    ];
+
+    // 装備データ
+    const EQUIPMENTS = [
+      { id: 1, name: "ホークアイ (頭)", icon: "🧢", effect: "周辺視野拡張", desc: "遠くの看板の文字を3秒見る。一点集中を解除し、脳の並列処理を上げる。" },
+      { id: 2, name: "重力アンカー (胴)", icon: "🥋", effect: "不動心", desc: "息を吐きながら、体重を踵（かかと）に落とす。他人の感情に流されなくなる。" },
+      { id: 3, name: "冷水の護符 (飾)", icon: "💧", effect: "覚醒", desc: "朝、冷水を浴びるか、手首を冷やす。迷走神経を刺激しモードを切り替える。" }
+    ];
+
+    // === システムロジック ===
     let level = parseInt(localStorage.getItem('grimoire_level')) || 1;
     let exp = parseInt(localStorage.getItem('grimoire_exp')) || 0;
     let maxExp = level * 100;
+    
+    // 初期化
+    init();
 
-    // 初期表示更新
-    updateHud();
-    checkUnlocks();
-
-    // ログインボーナス (1日1回)
-    const lastLogin = localStorage.getItem('last_login_date');
-    const today = new Date().toDateString();
-    if (lastLogin !== today) {
-      alert("【ログインボーナス】\n本日のマナを獲得しました。\nEXP +30");
-      addExp(30);
-      localStorage.setItem('last_login_date', today);
+    function init() {
+      updateHud();
+      renderMonsters();
+      renderEquipments();
+      renderKuji();
+      checkLoginBonus();
     }
 
-    // 経験値を加算する関数
+    // デイリークエスト表示
+    function checkLoginBonus() {
+      const lastLogin = localStorage.getItem('last_login_date');
+      const today = new Date().toDateString();
+      
+      if (lastLogin !== today) {
+        // ランダムにクエスト選択
+        const quest = QUESTS[Math.floor(Math.random() * QUESTS.length)];
+        document.getElementById('dailyQuestText').innerHTML = `<strong>${quest.title}</strong><br><br>${quest.desc}`;
+        document.getElementById('dailyModal').classList.add('show');
+      }
+    }
+
+    function acceptQuest() {
+      const today = new Date().toDateString();
+      localStorage.setItem('last_login_date', today);
+      document.getElementById('dailyModal').classList.remove('show');
+      addExp(20); // ログインボーナスEXP
+      alert("クエストを受注しました。\nEXP +20 獲得");
+    }
+
+    // EXP加算
     function addExp(amount) {
       exp += amount;
       if (exp >= maxExp) {
         levelUp();
+      } else {
+        saveData();
       }
       updateHud();
-      saveData();
     }
 
     function levelUp() {
       exp -= maxExp;
       level++;
       maxExp = level * 100;
-      
-      // レベルアップ演出
-      const overlay = document.getElementById('levelup-overlay');
-      overlay.classList.add('show');
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
-      
-      checkUnlocks();
+      saveData();
+      document.getElementById('levelupModal').classList.add('show');
+    }
+    
+    function closeLevelUp() {
+      document.getElementById('levelupModal').classList.remove('show');
     }
 
     function updateHud() {
       document.getElementById('currentLevel').innerText = level;
       document.getElementById('expText').innerText = `${exp} / ${maxExp}`;
-      const percentage = (exp / maxExp) * 100;
-      document.getElementById('expBar').style.width = `${percentage}%`;
+      document.getElementById('expBar').style.width = `${(exp / maxExp) * 100}%`;
     }
 
     function saveData() {
@@ -208,53 +300,104 @@
       localStorage.setItem('grimoire_exp', exp);
     }
 
-    // ロック解除判定
-    function checkUnlocks() {
-      if (level >= 3) unlock('secretContent1');
-      if (level >= 5) unlock('secretContent2');
-    }
-
-    function unlock(id) {
-      const el = document.getElementById(id);
-      if (el && el.classList.contains('locked-content')) {
-        el.classList.remove('locked-content');
-        el.querySelector('.lock-overlay').remove();
-        // ここでファンファーレ等を鳴らしても良い
-      }
-    }
-
-    // === 九字切りロジック ===
-    const kujiChars = ["臨", "兵", "闘", "者", "皆", "陣", "烈", "在", "前"];
-    const kujiGrid = document.getElementById('kujiGrid');
-    let kujiStep = 0;
-
-    kujiChars.forEach((char, idx) => {
-      const cell = document.createElement('div');
-      cell.className = 'kuji-cell';
-      cell.innerText = char;
-      cell.onclick = () => {
-        if (idx === kujiStep) {
-          cell.classList.add('active');
-          if (navigator.vibrate) navigator.vibrate(20);
-          kujiStep++;
-          if (kujiStep === 9) {
-            document.getElementById('kujiLabel').innerText = "儀式完了: EXP獲得 +50";
-            addExp(50);
-            if (navigator.vibrate) navigator.vibrate([50,50,50]);
-            setTimeout(() => {
-              document.querySelectorAll('.kuji-cell').forEach(c => c.classList.remove('active'));
-              document.getElementById('kujiLabel').innerText = "";
-              kujiStep = 0;
-            }, 2000);
+    // レンダリング系
+    function renderMonsters() {
+      const container = document.getElementById('monsterList');
+      container.innerHTML = "";
+      MONSTERS.forEach(m => {
+        // タップで「討伐（収集）」したことにする演出
+        const div = document.createElement('div');
+        div.className = `monster-card ${localStorage.getItem('monster_'+m.id) ? 'collected' : ''}`;
+        div.innerHTML = `
+          <div class="monster-icon">${m.icon}</div>
+          <div class="monster-name">${m.name}</div>
+          <div class="monster-weakness">${m.weak}</div>
+        `;
+        div.onclick = () => {
+          if(!localStorage.getItem('monster_'+m.id)) {
+            localStorage.setItem('monster_'+m.id, true);
+            div.classList.add('collected');
+            addExp(30);
+            alert(`${m.name} を図鑑に登録しました。\n「弱点」が開示されます。`);
+          } else {
+            alert(m.desc);
           }
-        } else {
-          kujiStep = 0;
-          document.querySelectorAll('.kuji-cell').forEach(c => c.classList.remove('active'));
-          if (navigator.vibrate) navigator.vibrate(200);
-        }
-      };
-      kujiGrid.appendChild(cell);
-    });
+        };
+        container.appendChild(div);
+      });
+    }
+
+    function renderEquipments() {
+      const container = document.getElementById('equipmentList');
+      container.innerHTML = "";
+      EQUIPMENTS.forEach(e => {
+        const isEquipped = localStorage.getItem('equip_'+e.id);
+        const div = document.createElement('div');
+        div.className = 'equip-slot';
+        div.innerHTML = `
+          <div class="equip-icon">${e.icon}</div>
+          <div class="equip-info">
+            <div style="font-weight:bold; font-size:14px; color:#eee;">${e.name}</div>
+            <div style="font-size:10px; color:#888;">効果: ${e.effect}</div>
+          </div>
+          <button class="equip-btn ${isEquipped ? 'equipped' : ''}" onclick="toggleEquip(${e.id}, this)">
+            ${isEquipped ? 'E' : '装備'}
+          </button>
+        `;
+        div.onclick = (ev) => { if(ev.target.tagName !== 'BUTTON') alert(e.desc); };
+        container.appendChild(div);
+      });
+    }
+
+    window.toggleEquip = function(id, btn) {
+      const key = 'equip_' + id;
+      if(localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        btn.classList.remove('equipped');
+        btn.innerText = "装備";
+      } else {
+        // 他の同じ部位を外す処理は省略（シンプルに全部装備可能にする）
+        localStorage.setItem(key, true);
+        btn.classList.add('equipped');
+        btn.innerText = "E";
+        addExp(10);
+        alert("装備しました。\n意識が書き換わります。");
+      }
+    };
+
+    function renderKuji() {
+      const chars = ["臨", "兵", "闘", "者", "皆", "陣", "烈", "在", "前"];
+      const grid = document.getElementById('kujiGrid');
+      let step = 0;
+      
+      chars.forEach((char, idx) => {
+        const cell = document.createElement('div');
+        cell.className = 'kuji-cell';
+        cell.innerText = char;
+        cell.onclick = () => {
+          if (idx === step) {
+            cell.classList.add('active');
+            if(navigator.vibrate) navigator.vibrate(20);
+            step++;
+            if (step === 9) {
+              document.getElementById('kujiLabel').innerText = "破邪顕正：EXP +50";
+              addExp(50);
+              if(navigator.vibrate) navigator.vibrate([50,50,50]);
+              setTimeout(() => {
+                document.querySelectorAll('.kuji-cell').forEach(c => c.classList.remove('active'));
+                document.getElementById('kujiLabel').innerText = "";
+                step = 0;
+              }, 1500);
+            }
+          } else {
+            step = 0;
+            document.querySelectorAll('.kuji-cell').forEach(c => c.classList.remove('active'));
+            if(navigator.vibrate) navigator.vibrate(200);
+          }
+        };
+        grid.appendChild(cell);
+      });
+    }
   </script>
 </body>
 </html>
