@@ -1,0 +1,242 @@
+/* ベースの装飾（リセットと基本設定） */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #05080f; /* さらに深く暗いネイビー */
+    color: #d1d5db; /* 摩擦の少ないグレーがかった白 */
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    line-height: 2.0;
+    letter-spacing: 0.06em;
+    position: relative;
+}
+
+/* 画面中央にうっすらと光る重力の中心（特異点）を表現 */
+.void-background {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150vw;
+    height: 150vh;
+    background: radial-gradient(circle, rgba(17, 24, 39, 0.8) 0%, rgba(5, 8, 15, 1) 60%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* ページ全体の幅と余白（スマホ対応） */
+.container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 80px 20px;
+}
+
+/* ヘッダー部分 */
+.hero-section {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.hero-image-placeholder {
+    width: 100%;
+    height: 350px;
+    background-color: #0b1120;
+    border: 1px solid #1e293b;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 50px;
+    color: #475569;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.main-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #f8fafc;
+    line-height: 1.7;
+    margin-bottom: 25px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+
+.sub-title {
+    font-size: 1.05rem;
+    color: #94a3b8;
+    line-height: 1.8;
+}
+
+/* テキストの強調（下品にならない発光） */
+.accent-text {
+    color: #818cf8; /* 静かなる青紫の発光 */
+    text-shadow: 0 0 15px rgba(129, 140, 248, 0.4);
+}
+
+.bold-text {
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+/* 本文部分 */
+.content-section p {
+    margin-bottom: 2.2em;
+    font-size: 1.05rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    color: #f8fafc;
+    border-left: 2px solid #6366f1; /* 細く鋭い青の境界線 */
+    padding-left: 18px;
+    margin: 80px 0 40px 0;
+    font-weight: 700;
+    line-height: 1.6;
+}
+
+.quote-box {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 30px;
+    border-radius: 6px;
+    margin: 40px 0;
+    color: #cbd5e1;
+    border-left: 2px solid #475569;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+}
+
+/* オファーボックス（事象の地平面） */
+.offer-box {
+    background: linear-gradient(180deg, #0f172a 0%, #05080f 100%);
+    border: 1px solid #1e293b;
+    padding: 50px 30px;
+    text-align: center;
+    margin-top: 80px;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.8);
+}
+
+.offer-label {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 10px;
+    letter-spacing: 0.1em;
+}
+
+.offer-box h3 {
+    font-size: 1.4rem;
+    color: #ffffff;
+    margin-bottom: 20px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.limit {
+    color: #ef4444;
+    font-size: 0.95rem;
+    margin-bottom: 40px;
+    font-weight: 700;
+}
+
+/* 吸引型ボタン（引力の視覚化） */
+.cta-button {
+    display: inline-block;
+    background-color: #020617;
+    color: #e0e7ff;
+    text-decoration: none;
+    padding: 20px 45px;
+    border: 1px solid #312e81;
+    border-radius: 50px; /* 丸みを持たせて摩擦を減らす */
+    font-size: 1.15rem;
+    font-weight: 700;
+    transition: all 0.5s ease;
+    box-shadow: 0 0 20px rgba(49, 46, 129, 0.4); /* 青紫のオーラ */
+}
+
+.cta-button .arrow {
+    display: inline-block;
+    transition: transform 0.5s ease;
+    margin-left: 10px;
+}
+
+.cta-button:hover {
+    background-color: #000000;
+    border-color: #4f46e5;
+    color: #ffffff;
+    box-shadow: 0 0 40px rgba(79, 70, 229, 0.6); /* ホバー時に引力が増す */
+    transform: translateY(2px) scale(0.98); /* 押すと奥に吸い込まれる挙動 */
+}
+
+.cta-button:hover .arrow {
+    transform: translateX(5px); /* 矢印が深淵へ向かう */
+}
+
+/* --- FAQページ専用の装飾 --- */
+.faq-item {
+    margin-bottom: 40px;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
+}
+
+.faq-item:hover {
+    background: rgba(15, 23, 42, 0.7);
+    transform: translateY(-2px);
+}
+
+.faq-q {
+    font-size: 1.2rem;
+    color: #818cf8; /* アクセントの青紫 */
+    margin-bottom: 15px;
+    font-weight: 700;
+    border-bottom: 1px solid #312e81;
+    padding-bottom: 15px;
+    line-height: 1.5;
+}
+
+.faq-a {
+    font-size: 1.05rem;
+    color: #cbd5e1;
+    line-height: 1.9;
+}
+
+.faq-a strong {
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+/* スマホ用調整 */
+@media screen and (max-width: 600px) {
+    .container {
+        padding: 40px 20px;
+    }
+    .main-title {
+        font-size: 1.35rem;
+    }
+    h2 {
+        font-size: 1.3rem;
+    }
+    .cta-button {
+        width: 100%;
+        padding: 18px 20px;
+        font-size: 1.05rem;
+    }
+    .faq-q {
+        font-size: 1.1rem;
+    }
+    .faq-item {
+        padding: 20px;
+    }
+}
+
+footer {
+    text-align: center;
+    margin-top: 100px;
+    font-size: 0.85rem;
+    color: #334155;
+}
